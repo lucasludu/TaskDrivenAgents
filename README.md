@@ -83,6 +83,7 @@ graph TD
 ### Instalación
 
 1. Clona el repositorio:
+
    ```bash
    git clone https://github.com/lucasludu/TaskDrivenAgents.git
    cd TaskDrivenAgents
@@ -91,6 +92,7 @@ graph TD
 2. Configura tus credenciales. Crea el archivo `appsettings.local.json` en la
    raíz del proyecto para almacenar tus llaves de API de forma segura
    localmente (este archivo está preconfigurado en `.gitignore`):
+
    ```json
    {
      "OPENAI_API_KEY": "TU_GEMINI_API_KEY",
@@ -104,6 +106,7 @@ graph TD
 ### Ejecutar Localmente
 
 Para iniciar el servidor de desarrollo, ejecuta:
+
 ```bash
 dotnet run
 ```
