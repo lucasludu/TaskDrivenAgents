@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <HeadOutlet />
+    
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        /* Custom scrollbar for modern feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+        
+        /* Premium Markdown Styles */
+        .markdown-body {
+            line-height: 1.6;
+            font-size: 15px;
+            color: #e2e8f0;
+        }
+        .markdown-body h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #818cf8;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 0.5rem;
+        }
+        .markdown-body h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #60a5fa;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .markdown-body h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #fb7185;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .markdown-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .markdown-body th {
+            background-color: #1e293b;
+            color: #f8fafc;
+            font-weight: 600;
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 2px solid #334155;
+        }
+        .markdown-body td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #1e293b;
+        }
+        .markdown-body tr:last-child td {
+            border-bottom: none;
+        }
+        .markdown-body tr:hover td {
+            background-color: rgba(30, 41, 59, 0.4);
+        }
+        .markdown-body ul {
+            padding-left: 20px;
+            margin: 0.75rem 0;
+        }
+        .markdown-body li {
+            margin-bottom: 0.35rem;
+        }
+        .markdown-body code {
+            font-family: 'Fira Code', monospace;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #f472b6;
+            font-size: 0.9em;
+        }
+        .markdown-body pre {
+            background: #090d16;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #1e293b;
+            margin: 1rem 0;
+        }
+        .markdown-body pre code {
+            background: none;
+            padding: 0;
+            color: #e2e8f0;
+            font-size: 0.9em;
+        }
+        .markdown-body hr {
+            border: 0;
+            height: 1px;
+            background: #1e293b;
+            margin: 1.5rem 0;
+        }
+        .markdown-body strong {
+            color: #f8fafc;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <Routes @rendermode="Microsoft.AspNetCore.Components.Web.RenderMode.InteractiveServer" />
+    </div>
+
+    <script src="_framework/blazor.web.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+</body>
+
+</html>

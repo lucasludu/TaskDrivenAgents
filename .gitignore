@@ -1,0 +1,40 @@
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Mono auto generated files
+mono_crash.*
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPS/
+[Rr]elease/
+[Rr]eleasePS/
+x64/
+x86/
+[Aa]rm/
+[Aa]rm64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio 2015/2017/2019/2022 cache directory
+.vs/
+
+# Secrets and Credentials
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+*.pkcs12
+secrets.json
+appsettings.local.json
+credentials.json
+client_secret*.json

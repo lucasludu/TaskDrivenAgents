@@ -1,0 +1,278 @@
+@page "/"
+@using System.IO
+@using Markdig
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-8 px-4">
+    <MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true" Style="font-weight: 800; background: linear-gradient(90deg, #818cf8 0%, #f472b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        🧠 MOTOR DE AGENTE AUTÓNOMO ReAct
+    </MudText>
+    <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-8 gray-text">
+        Descompone objetivos complejos, ejecuta herramientas en .NET e interactúa con APIs reales usando Google Gemini
+    </MudText>
+
+    <MudGrid>
+        <!-- Columna de Control de Entrada -->
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="4" Class="pa-6 rounded-lg border border-slate" Style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px);">
+                <MudText Typo="Typo.h6" Class="mb-4" Color="Color.Primary" Style="font-weight: 600;">🎯 Objetivo del Agente</MudText>
+                
+                <MudTextField T="string" Label="Directorio del Proyecto (Workspace)" Variant="Variant.Outlined" 
+                              @bind-Value="_workspacePath" Class="mb-4" Disabled="_isRunning" 
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Folder" />
+
+                <MudSelect T="string" Label="Modelo de Inteligencia Artificial" Variant="Variant.Outlined" 
+                           @bind-Value="_selectedModel" Class="mb-4" Disabled="_isRunning">
+                    <MudSelectItem Value="@("gemini-1.5-flash")">Gemini 1.5 Flash (Google AI Studio - 1500 req/día)</MudSelectItem>
+                    <MudSelectItem Value="@("gemini-2.5-flash")">Gemini 2.5 Flash (Google AI Studio - 20 req/día)</MudSelectItem>
+                    <MudSelectItem Value="@("gemini-2.5-pro")">Gemini 2.5 Pro (Google AI Studio)</MudSelectItem>
+                    <MudSelectItem Value="@("llama-3.3-70b-versatile")">Llama 3.3 70B (Groq Cloud)</MudSelectItem>
+                    <MudSelectItem Value="@("deepseek-r1-distill-llama-70b")">DeepSeek R1 Distill Llama 70B (Groq Cloud)</MudSelectItem>
+                    <MudSelectItem Value="@("mixtral-8x7b-32768")">Mixtral 8x7B (Groq Cloud)</MudSelectItem>
+                </MudSelect>
+
+                <MudTextField T="string" Label="Escribe el objetivo aquí" Variant="Variant.Outlined" Lines="5" 
+                              @bind-Value="_objective" Class="mb-4" Disabled="_isRunning" />
+
+                <div class="d-flex flex-wrap gap-2 mb-6">
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Dark" OnClick="LoadDemoObjective1" Disabled="_isRunning">
+                        Demo: Explorar Proyecto
+                    </MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Dark" OnClick="LoadDemoObjective2" Disabled="_isRunning">
+                        Demo: Correr Tests/Build
+                    </MudButton>
+                </div>
+
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Size="Size.Large"
+                           OnClick="ExecuteAgentAsync" Disabled="_isRunning" StartIcon="@Icons.Material.Filled.PlayArrow">
+                    @(_isRunning ? "Ejecutando..." : "Iniciar Agente")
+                </MudButton>
+
+                @if (_isRunning)
+                {
+                    <MudProgressLinear Color="Color.Secondary" Indeterminate="true" Class="mt-4" />
+                }
+            </MudPaper>
+
+
+        </MudItem>
+
+        <!-- Columna de Progreso en Tiempo Real -->
+        <MudItem xs="12" md="8">
+            <MudTabs Elevation="4" Rounded="true" Class="rounded-lg border border-slate" PanelClass="pa-6" Style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px);">
+                
+                <!-- Tab de Consola -->
+                <MudTabPanel Text="Terminal de Ejecución" Icon="@Icons.Material.Filled.Terminal">
+                    @if (_steps.Count == 0)
+                    {
+                        <div class="d-flex flex-column align-center justify-center py-12">
+                            <MudIcon Icon="@Icons.Material.Filled.Psychology" Size="Size.Large" Class="mb-4" Style="color: #4b5563;" />
+                            <MudText Class="text-muted">Presiona 'Iniciar Agente' para ver el bucle de razonamiento ReAct.</MudText>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column gap-4" style="max-height: 60vh; overflow-y: auto;">
+                            @foreach (var step in _steps)
+                            {
+                                @switch (step.Type)
+                                {
+                                    case AgentStepType.Thought:
+                                        <div class="pa-4 rounded-lg" style="background: rgba(234, 179, 8, 0.1); border-left: 4px solid #eab308;">
+                                            <div class="d-flex align-center gap-2 mb-1">
+                                                <MudIcon Icon="@Icons.Material.Filled.Psychology" Color="Color.Warning" Size="Size.Small" />
+                                                <MudText Typo="Typo.caption" Color="Color.Warning" Style="font-weight: 700; text-transform: uppercase;">PENSAMIENTO</MudText>
+                                                <MudSpacer />
+                                                <MudText Typo="Typo.caption" Style="color: #71717a;">@step.Timestamp.ToString("HH:mm:ss")</MudText>
+                                            </div>
+                                            <MudText Typo="Typo.body2" Style="color: #fef08a;">@step.Content</MudText>
+                                        </div>
+                                        break;
+
+                                    case AgentStepType.Action:
+                                        <div class="pa-4 rounded-lg" style="background: rgba(168, 85, 247, 0.1); border-left: 4px solid #a855f7;">
+                                            <div class="d-flex align-center gap-2 mb-1">
+                                                <MudIcon Icon="@Icons.Material.Filled.Build" Color="Color.Secondary" Size="Size.Small" />
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-weight: 700; text-transform: uppercase;">ACCIÓN</MudText>
+                                                <MudSpacer />
+                                                <MudText Typo="Typo.caption" Style="color: #71717a;">@step.Timestamp.ToString("HH:mm:ss")</MudText>
+                                            </div>
+                                            <MudText Typo="Typo.body2" Style="color: #f3e8ff;">@step.Content</MudText>
+                                        </div>
+                                        break;
+
+                                    case AgentStepType.Observation:
+                                        <div class="pa-4 rounded-lg" style="background: rgba(16, 185, 129, 0.05); border-left: 4px solid #10b981; font-family: 'Fira Code', monospace; font-size: 0.85rem;">
+                                            <div class="d-flex align-center gap-2 mb-1">
+                                                <MudIcon Icon="@Icons.Material.Filled.Visibility" Color="Color.Success" Size="Size.Small" />
+                                                <MudText Typo="Typo.caption" Color="Color.Success" Style="font-weight: 700; text-transform: uppercase;">OBSERVACIÓN</MudText>
+                                                <MudSpacer />
+                                                <MudText Typo="Typo.caption" Style="color: #71717a;">@step.Timestamp.ToString("HH:mm:ss")</MudText>
+                                            </div>
+                                            <pre style="white-space: pre-wrap; margin: 0; color: #a7f3d0; background: none; border: none; padding: 0;">@step.Content</pre>
+                                        </div>
+                                        break;
+
+                                    case AgentStepType.FinalAnswer:
+                                        <div class="pa-5 rounded-lg border-2 border-emerald-500" style="background: rgba(16, 185, 129, 0.15); border-left: 8px solid #10b981;">
+                                            <div class="d-flex align-center gap-2 mb-2">
+                                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Success" Size="Size.Medium" />
+                                                <MudText Typo="Typo.button" Color="Color.Success" Style="font-weight: 800; font-size: 1rem;">🏆 OBJETIVO COMPLETADO</MudText>
+                                                <MudSpacer />
+                                                <MudText Typo="Typo.caption" Style="color: #9ca3af;">@step.Timestamp.ToString("HH:mm:ss")</MudText>
+                                            </div>
+                                            <MudText Typo="Typo.body1" Style="font-weight: 500; color: #ecfdf5;">@step.Content</MudText>
+                                        </div>
+                                        break;
+
+                                    case AgentStepType.Error:
+                                        <div class="pa-4 rounded-lg" style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444;">
+                                            <div class="d-flex align-center gap-2 mb-1">
+                                                <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Size="Size.Small" />
+                                                <MudText Typo="Typo.caption" Color="Color.Error" Style="font-weight: 700; text-transform: uppercase;">FALLO / ERROR</MudText>
+                                                <MudSpacer />
+                                                <MudText Typo="Typo.caption" Style="color: #71717a;">@step.Timestamp.ToString("HH:mm:ss")</MudText>
+                                            </div>
+                                            <MudText Typo="Typo.body2" Style="color: #fee2e2;">@step.Content</MudText>
+                                        </div>
+                                        break;
+                                }
+                            }
+                        </div>
+                    }
+                </MudTabPanel>
+
+                <!-- Tab de Reporte Renderizado -->
+                <MudTabPanel Text="Visualización del Reporte" Icon="@Icons.Material.Filled.Article">
+                    @if (string.IsNullOrWhiteSpace(_markdownHtml))
+                    {
+                        <div class="d-flex flex-column align-center justify-center py-12">
+                            <MudIcon Icon="@Icons.Material.Filled.VisibilityOff" Size="Size.Large" Class="mb-4" Style="color: #4b5563;" />
+                            <MudText Class="text-muted">Aún no se ha generado ningún reporte. Completa una tarea primero.</MudText>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudPaper Elevation="0" Class="pa-6 rounded-lg markdown-body" Style="background: #090d16; border: 1px solid #1e293b; max-height: 60vh; overflow-y: auto;">
+                            @((MarkupString)_markdownHtml)
+                        </MudPaper>
+                    }
+                </MudTabPanel>
+            </MudTabs>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<style>
+    .gray-text {
+        color: #9ca3af;
+    }
+    .text-muted {
+        color: #6b7280;
+    }
+    .border-slate {
+        border-color: #1e293b !important;
+    }
+</style>
+
+@code {
+    [Inject] private AgentEngine Agent { get; set; } = default!;
+    [Inject] private ILlmService Llm { get; set; } = default!;
+    [Inject] private Microsoft.Extensions.Configuration.IConfiguration Configuration { get; set; } = default!;
+
+    private string _workspacePath = Directory.GetCurrentDirectory();
+    private string _selectedModel = "gemini-1.5-flash";
+    private string _objective = "Explorá el directorio actual, encontrá el archivo 'Program.cs' y explicame qué servicios se están inyectando en él. Guardá el resultado en un archivo 'explicacion.md'.";
+    private bool _isRunning = false;
+    private List<AgentStep> _steps = new();
+    private string _markdownHtml = "";
+
+    protected override void OnInitialized()
+    {
+        LoadReportFromDisk();
+    }
+
+    private void LoadDemoObjective1()
+    {
+        _objective = "Explorá el directorio actual, encontrá el archivo 'Program.cs' y explicame qué servicios se están inyectando en él. Guardá el resultado en un archivo 'explicacion.md'.";
+    }
+
+    private void LoadDemoObjective2()
+    {
+        _objective = "Ejecutá 'dotnet build' en la terminal. Si hay errores, decime cuáles son. Si compila bien, decime 'Todo OK' y guardá el log de consola en 'build_log.md'.";
+    }
+
+    private async Task ExecuteAgentAsync()
+    {
+        if (_isRunning) return;
+
+        _isRunning = true;
+        _steps.Clear();
+        _markdownHtml = "";
+        if (_selectedModel.StartsWith("llama-") || _selectedModel.StartsWith("deepseek-") || _selectedModel.StartsWith("mixtral-"))
+        {
+            Llm.BaseUrl = Configuration["GROQ_BASE_URL"] ?? "https://api.groq.com/openai/v1/";
+            Llm.ApiKey = Configuration["GROQ_API_KEY"] ?? Environment.GetEnvironmentVariable("GROQ_API_KEY") ?? "";
+            Llm.Model = _selectedModel;
+        }
+        else
+        {
+            Llm.BaseUrl = Configuration["OPENAI_BASE_URL"] ?? "https://generativelanguage.googleapis.com/v1beta/openai/";
+            Llm.ApiKey = Configuration["OPENAI_API_KEY"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "";
+            Llm.Model = _selectedModel;
+        }
+        StateHasChanged();
+
+        try
+        {
+            // Execute Agent loop and stream steps directly to Blazor UI
+            await Agent.RunAsync(_objective, _workspacePath, maxSteps: 15, onStepAdded: async (step) =>
+            {
+                _steps.Add(step);
+                
+                // If the step is an observation or write, try reloading report to show intermediate updates
+                if (step.Type == AgentStepType.Observation || step.Type == AgentStepType.FinalAnswer)
+                {
+                    LoadReportFromDisk();
+                }
+
+                await InvokeAsync(StateHasChanged);
+            });
+        }
+        catch (Exception ex)
+        {
+            _steps.Add(new AgentStep(AgentStepType.Error, $"Fallo crítico en el motor del agente: {ex.Message}", DateTime.Now));
+        }
+        finally
+        {
+            _isRunning = false;
+            LoadReportFromDisk();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void LoadReportFromDisk()
+    {
+        try
+        {
+            // Busca el archivo .md más recientemente modificado en el workspace para mostrarlo
+            if (Directory.Exists(_workspacePath))
+            {
+                var mdFiles = Directory.GetFiles(_workspacePath, "*.md")
+                    .OrderByDescending(f => File.GetLastWriteTime(f))
+                    .ToList();
+
+                if (mdFiles.Any())
+                {
+                    var mdContent = File.ReadAllText(mdFiles.First());
+                    var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+                    _markdownHtml = Markdown.ToHtml(mdContent, pipeline);
+                    return;
+                }
+            }
+        }
+        catch
+        {
+            // Ignore temporary file locks
+        }
+    }
+}
